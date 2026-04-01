@@ -1,0 +1,26 @@
+{
+  "name": "logic-as-data",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "watch": "vite build --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LaraWave/logic-as-data.git"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.2",
+    "@vitejs/plugin-vue": "^6.0.5",
+    "tailwindcss": "^4.2.2",
+    "vite": "^8.0.3",
+    "vue": "^3.5.31"
+  },
+  "dependencies": {
+    "vue-router": "^4.6.4"
+  }
+}

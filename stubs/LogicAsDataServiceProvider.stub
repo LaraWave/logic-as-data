@@ -1,0 +1,86 @@
+<?php
+
+namespace App\Providers;
+
+use LaraWave\LogicAsData\Facades\LogicEngine;
+use Illuminate\Support\ServiceProvider;
+use LaraWave\LogicAsData\LogicRegistry;
+
+class LogicAsDataServiceProvider extends ServiceProvider
+{
+    /**
+     * Map source aliases to their Source Extractor classes.
+     *
+     * @var array<string, string>
+     */
+    private array $extractors = [
+        // 'your.extractor' => \App\LogicAsData\Extractors\YourExtractor::class,
+    ];
+
+    /**
+     * Map mathematical/logical operators to their classes.
+     *
+     * @var array<string, string>
+     */
+    private array $operators = [
+        // 'your.operator' => \App\LogicAsData\Operators\YourOperator::class,
+    ];
+
+    /**
+     * Map resolver aliases to their Target Resolver classes.
+     *
+     * @var array<string, string>
+     */
+    private array $resolvers = [
+        // 'your.resolver' => \App\LogicAsData\Resolvers\YourResolver::class,
+    ];
+
+    /**
+     * Map evaluator aliases to their Evaluator classes.
+     *
+     * @var array<string, string>
+     */
+    private array $evaluators = [
+        // 'your.evaluator' => \App\LogicAsData\Evaluators\YourEvaluator::class,
+    ];
+
+    /**
+     * Map action aliases to their Action classes.
+     *
+     * @var array<string, string>
+     */
+    private array $actions = [
+        // 'your.action' => \App\LogicAsData\Actions\YourAction::class,
+    ];
+
+    /**
+     * Register any custom extractors, operators, or resolvers here.
+     */
+    public function boot(LogicRegistry $registry)
+    {
+        // Register source extractor mappings defined in the extractors array
+        foreach ($this->extractors as $key => $extractor) {
+            $registry->registerExtractor($key, $extractor);
+        }
+
+        // Register operator mappings defined in the operators array
+        foreach ($this->operators as $key => $operator) {
+            $registry->registerOperator($key, $operator);
+        }
+
+        // Register resolver mappings defined in the resolvers array
+        foreach ($this->resolvers as $key => $resolver) {
+            $registry->registerResolver($key, $resolver);
+        }
+
+        // Register evaluator mappings defined in the evaluators array
+        foreach ($this->evaluators as $key => $evaluator) {
+            $registry->registerEvaluator($key, $evaluator);
+        }
+
+        // Register action mappings defined in the actions array
+        foreach ($this->actions as $key => $action) {
+            $registry->registerAction($key, $action);
+        }
+    }
+}
