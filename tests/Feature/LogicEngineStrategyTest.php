@@ -65,7 +65,7 @@ beforeEach(function () {
                 'combinator' => 'and',
                 'clauses' => [
                     [
-                        'source' => 'cart.total',
+                        'source' => ['alias' => 'cart.total'],
                         'operator' => 'greater_than_or_equal',
                         'target' => [
                             'alias' => 'system.config',
@@ -76,7 +76,7 @@ beforeEach(function () {
                         ]
                     ],
                     [
-                        'source' => 'user.last_purchase_date',
+                        'source' => ['alias' => 'user.last_purchase_date'],
                         'operator' => 'greater_than_or_equal',
                         'target' => [
                             'alias' => 'date.relative',
@@ -90,14 +90,20 @@ beforeEach(function () {
                         'combinator' => 'or',
                         'clauses' => [
                             [
-                                'source' => 'user.tier',
+                                'source' => ['alias' => 'user.tier'],
                                 'operator' => 'equals',
-                                'target' => 'vip'
+                                'target' => [
+                                    'alias' => 'core.literal',
+                                    'params' => ['value' => 'vip', 'value_type' => 'string']
+                                ]
                             ],
                             [
-                                'source' => 'user.lifetime_spend',
+                                'source' => ['alias' => 'user.lifetime_spend'],
                                 'operator' => 'greater_than',
-                                'target' => 50000
+                                'target' => [
+                                    'alias' => 'core.literal',
+                                    'params' => ['value' => '50000', 'value_type' => 'integer']
+                                ]
                             ]
                         ]
                     ]
@@ -120,9 +126,12 @@ beforeEach(function () {
         'hook' => 'checkout.premium_upgrade',
         'definition' => [
             'predicate' => [
-                'source' => 'user.status',
+                'source' => ['alias' => 'user.status'],
                 'operator' => 'equals',
-                'target' => 'active'
+                'target' => [
+                    'alias' => 'core.literal',
+                    'params' => ['value' => 'active', 'value_type' => 'string']
+                ]
             ],
             'actions' => []
         ],

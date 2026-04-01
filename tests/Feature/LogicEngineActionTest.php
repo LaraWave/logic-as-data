@@ -66,9 +66,12 @@ beforeEach(function () {
         'hook' => 'checkout.process',
         'definition' => [
             'predicate' => [
-                'source' => 'test.boolean',
+                'source' => ['alias' => 'test.boolean'],
                 'operator' => 'equals',
-                'target' => true
+                'target' => [
+                    'alias' => 'core.literal',
+                    'params' => ['value' => true, 'value_type' => 'boolean']
+                ]
             ],
             'actions' => [
                 [

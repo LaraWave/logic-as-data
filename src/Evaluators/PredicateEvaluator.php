@@ -72,55 +72,52 @@ class PredicateEvaluator extends Evaluator
     {
         $operatorKey = $clause['operator'] ?? null;
         if (! $operatorKey) {
-            // dd($clause, $context);
             throw new InvalidArgumentException("Logic Engine: Each clause must contain an 'operator'.");
         }
 
         // Fetch the source value
-        $sourceValue = $this->resolveSource($clause['source'] ?? null, $context);
+        $sourceValue = $this->resolveSource($clause['source'] ?? [], $context);
 
-        $targetValue = $this->resolveTarget($clause['target'] ?? null, $context);
+        $targetValue = $this->resolveTarget($clause['target'] ?? [], $context);
 
         // Check if the source and target values match using the Operator
         $passed = $this->registry->operator($operatorKey)->check($sourceValue, $targetValue);
         return $passed;
     }
 
-    private function resolveSource(mixed $source, array $context): mixed
+    private function resolveSource(array $source, array $context): mixed
     {
         if (empty($source)) {
-            throw new InvalidArgumentException("Logic Engine: missing source in JSON.");
+            throw new InvalidArgumentException('Logic Engine: missing source in JSON.');
         }
 
-        if (is_array($source)) {
-            if (! isset($source['alias'])) {
-                throw new InvalidArgumentException("Logic Engine: missing source alias in JSON.");
-            }
-
-            $extractor = $this->registry->extractor($source['alias']);
-
-            // Merge params into context for the extractor to use
-            $localContext = array_merge($context, [
-                '_params' => $source['params'] ?? []
-            ]);
-
-            return $extractor->extract($source['alias'], $localContext);
+        if (! isset($source['alias'])) {
+            throw new InvalidArgumentException('Logic Engine: missing source alias in JSON.');
         }
 
-        // Fallback for simple string aliases (e.g., "user.id")
-        return $this->registry->extractor($source)->extract($source, $context);
+        $extractor = $this->registry->extractor($source['alias']);
+
+        // Merge params into context for the extractor to use
+        $localContext = array_merge($context, [
+            '_params' => $source['params'] ?? []
+        ]);
+
+        return $extractor->extract($source['alias'], $localContext);
     }
 
-    protected function resolveTarget(mixed $target, array $context): mixed
+    protected function resolveTarget(array $target, array $context): mixed
     {
-        if (is_array($target) && isset($target['alias'])) {
-            $resolver = $this->registry->resolver($target['alias']);
-
-            // Pass the params explicitly to the resolver
-            return $resolver->resolve($target['alias'], $context, $target['params'] ?? []);
+        if (empty($target)) {
+            throw new InvalidArgumentException('Logic Engine: missing target in JSON.');
         }
 
-        // It's a static value (string, int, bool, array etc)
-        return $target;
+        if (! isset($target['alias'])) {
+            throw new InvalidArgumentException('Logic Engine: missing target alias in JSON.');
+        }
+
+        $resolver = $this->registry->resolver($target['alias']);
+
+        // Pass the params explicitly to the resolver
+        return $resolver->resolve($target['alias'], $context, $target['params'] ?? []);
     }
 }

@@ -37,14 +37,20 @@ test('it evaluates complex nested predicates', function () {
         'combinator' => 'and',
         'clauses' => [
             [
-                'source' => 'user.email',
+                'source' => ['alias' => 'user.email', 'params' => []],
                 'operator' => 'ends_with',
-                'target' => '@LaraWave.com'
+                'target' => [
+                    'alias' => 'core.literal',
+                    'params' => ['value' => '@larawave.com', 'value_type' => 'string']
+                ]
             ],
             [
-                'source' => 'user.is_verified',
+                'source' => ['alias' => 'user.is_verified'],
                 'operator' => 'equals',
-                'target' => true
+                'target' => [
+                    'alias' => 'core.literal',
+                    'params' => ['value' => true, 'value_type' => 'boolean']
+                ]
             ],
             [
                 'combinator' => 'or',
@@ -58,7 +64,10 @@ test('it evaluates complex nested predicates', function () {
                             ]
                         ],
                         "operator" => "equals",
-                        "target" => "Asia/Kolkata"
+                        "target" => [
+                            'alias' => 'core.literal',
+                            'params' => ['value_type' => 'string', 'value' => 'Asia/Kolkata']
+                        ]
                     ],
                     [
                         "source" => [
@@ -69,7 +78,10 @@ test('it evaluates complex nested predicates', function () {
                             ]
                         ],
                         "operator" => "equals",
-                        "target" => "testing"
+                        "target" => [
+                            'alias' => 'core.literal',
+                            'params' => ['value_type' => 'string', 'value' => 'testing']
+                        ]
                     ],
                 ]
             ],
@@ -77,7 +89,7 @@ test('it evaluates complex nested predicates', function () {
                 'combinator' => 'or',
                 'clauses' => [
                     [
-                        "source" => "user.timezone",
+                        "source" => ["alias" => "user.timezone"],
                         "operator" => "equals",
                         "target" => [
                             "alias" => "system.config",
@@ -90,9 +102,7 @@ test('it evaluates complex nested predicates', function () {
                     [
                         "source" => [
                             "alias" => "system.config",
-                            "params" => [
-                                "key" => "app.url"
-                            ]
+                            "params" => ["key" => "app.url"]
                         ],
                         "operator" => "equals",
                         "target" => [
@@ -111,7 +121,7 @@ test('it evaluates complex nested predicates', function () {
     // Context 1: Should pass
     $user1 = new class extends User {};
     $user1->forceFill([
-        'email' => 'test@LaraWave.com',
+        'email' => 'test@larawave.com',
         'email_verified_at' => now(),
         'timezone' => 'UTC'
     ]);
@@ -132,7 +142,7 @@ test('it evaluates complex nested predicates', function () {
     // Context 3: Should fail
     $user3 = new class extends User {};
     $user3->forceFill([
-        'email' => 'demo@LaraWave.com',
+        'email' => 'demo@larawave.com',
         'email_verified_at' => now(),
         'timezone' => 'Asia/Kolkata'
     ]);

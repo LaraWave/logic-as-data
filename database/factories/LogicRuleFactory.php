@@ -35,14 +35,20 @@ class LogicRuleFactory extends Factory
                     'combinator' => 'and',
                     'clauses' => [
                         [
-                            'source' => 'user.email',
+                            'source' => ['alias' => 'user.email'],
                             'operator' => 'ends_with',
-                            'target' => '@larawave.com'
+                            'target' => [
+                                'alias' => 'core.literal',
+                                'params' => ['value' => '@larawave.com', 'value_type' => 'string']
+                            ]
                         ],
                         [
-                            'source' => 'user.is_verified',
+                            'source' => ['alias' => 'user.is_verified'],
                             'operator' => 'equals',
-                            'target' => true
+                            'target' => [
+                                'alias' => 'core.literal',
+                                'params' => ['value' => true, 'value_type' => 'boolean']
+                            ]
                         ],
                         [
                             'combinator' => 'or',
@@ -56,7 +62,10 @@ class LogicRuleFactory extends Factory
                                         ]
                                     ],
                                     'operator' => 'equals',
-                                    'target' => 'Asia/Kolkata'
+                                    "target" => [
+                                        'alias' => 'core.literal',
+                                        'params' => ['value_type' => 'string', 'value' => 'Asia/Kolkata']
+                                    ]
                                 ],
                                 [
                                     'source' => [
@@ -67,7 +76,13 @@ class LogicRuleFactory extends Factory
                                         ]
                                     ],
                                     'operator' => 'equals',
-                                    'target' => 'testing'
+                                    "target" => [
+                                        'alias' => 'core.literal',
+                                        'params' => [
+                                            'value_type' => 'string',
+                                            'value' => 'testing'
+                                        ]
+                                    ]
                                 ]
                             ]
                         ],
@@ -75,9 +90,15 @@ class LogicRuleFactory extends Factory
                             'combinator' => 'or',
                             'clauses' => [
                                 [
-                                    'source' => 'user.email',
+                                    'source' => ['alias' => 'user.email'],
                                     'operator' => 'contains',
-                                    'target' => "@larawave.com"
+                                    'target' => [
+                                        'alias' => 'core.literal',
+                                        'params' => [
+                                            'value' => '@larawave.com',
+                                            'value_type' => 'string'
+                                        ]
+                                    ]
                                 ],
                                 [
                                     'source' => [
@@ -124,7 +145,7 @@ class LogicRuleFactory extends Factory
                     'combinator' => 'and',
                     'clauses' => [
                         [
-                            'source' => 'user.is_verified',
+                            'source' => ['alias' => 'user.is_verified'],
                             'operator' => 'equals',
                             'target' => true
                         ]

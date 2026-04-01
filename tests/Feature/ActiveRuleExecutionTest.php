@@ -76,7 +76,7 @@ it('triggers only active rules', function () {
     // Construct the Context payload to successfully pass the AST Logic Conditions
     $user = new class extends User {};
     $user->forceFill([
-        'email' => 'vip_customer@LaraWave.com',
+        'email' => 'vip_customer@larawave.com',
         'email_verified_at' => now(),
         'timezone' => 'Asia/Kolkata'
     ]);
