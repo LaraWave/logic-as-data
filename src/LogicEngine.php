@@ -41,7 +41,7 @@ class LogicEngine
 
         $traces = [];
         $overallStartTime = microtime(true);
-        $finalResult = $strategy === EvaluationStrategy::ALL;
+        $finalResult = $strategy->isAll();
 
         foreach ($rules as $rule) {
             $startTime = microtime(true);
@@ -75,12 +75,12 @@ class LogicEngine
                 break;
             }
 
-            if ($strategy === EvaluationStrategy::ALL && $status === TraceStatus::FAILED) {
+            if ($strategy->isAll() && $status === TraceStatus::FAILED) {
                 $finalResult = false;
                 break;
             }
 
-            if ($strategy === EvaluationStrategy::ANY && $status === TraceStatus::PASSED) {
+            if ($strategy->isAny() && $status === TraceStatus::PASSED) {
                 $finalResult = true;
                 break;
             }
