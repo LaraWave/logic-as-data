@@ -2,6 +2,7 @@
 
 namespace LaraWave\LogicAsData\Evaluators;
 
+use LaraWave\LogicAsData\Services\TraceBuilder;
 use LaraWave\LogicAsData\LogicRegistry;
 
 abstract class Evaluator
@@ -15,5 +16,9 @@ abstract class Evaluator
      * @param array $data  The runtime data context (e.g., user, cart).
      * @return bool
      */
-    abstract public function evaluate(array $rules, array $data): bool;
+    abstract public function evaluate(
+        array $predicate,
+        array $context,
+        ?TraceBuilder $traceBuilder = null
+    ): bool;
 }

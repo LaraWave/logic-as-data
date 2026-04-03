@@ -35,8 +35,8 @@ class InstallCommand extends Command
         // Publish the dedicated App-level Service Provider
         $this->publishServiceProvider();
 
-        // Publish the migration file
-        $this->publishMigration();
+        // Publish the migration files
+        $this->publishMigrations();
 
         $this->line('<fg=green>Logic As Data has been installed successfully!</>');
 
@@ -86,28 +86,52 @@ class InstallCommand extends Command
     /**
      * Publish the migration file.
      */
-    private function publishMigration(): void
+    private function publishMigrations(): void
     {
-        $migrationFile = 'create_logic_rules_table.php';
+        $migrations = [
+            'create_logic_rules_table.php',
+            'create_logic_telemetry_table.php',
+            'create_logic_traces_table.php',
+        ];
+
         $path = app()->databasePath('migrations' . DIRECTORY_SEPARATOR);
-        $files = File::glob($path . '*_' . $migrationFile);
-        if (!empty($files)) {
-            $this->line('  <fg=yellow>Migration file already present in your app. SKIPPED !</>');
-        } else {
+        $missingMigrations = false;
+
+        foreach ($migrations as $migration) {
+            $files = File::glob($path . '*_' . $migration);
+
+            if (! empty($files)) {
+                $this->line("  <fg=yellow>Migration [{$migration}] already exists. SKIPPED!</>");
+            } else {
+                $missingMigrations = true;
+            }
+        }
+
+        if ($missingMigrations) {
             $this->callSilent('vendor:publish', [
                 '--tag' => 'logic-as-data-migrations',
             ]);
-            $this->info('  <fg=green>Migration file published.</>');
+            $this->info('  <fg=green>Missing migration files successfully published.</>');
         }
 
-        if ($this->confirm('Would you like to run the package migration now?', true)) {
-            $files = File::glob($path . '*_' . $migrationFile);
-            $migrationFile = head($files);
-            $migrationFile = str_replace(app()->basePath(DIRECTORY_SEPARATOR), '', $migrationFile);
-            if ($migrationFile) {
-                $this->call('migrate', ['--path' => $migrationFile]);
+        if ($this->confirm('Would you like to run the package migrations now?', true)) {
+            $migratedAny = false;
+
+            foreach ($migrations as $migration) {
+                $files = File::glob($path . '*_' . $migration);
+
+                if (! empty($files)) {
+                    $migrationPath = str_replace(app()->basePath(DIRECTORY_SEPARATOR), '', head($files));
+
+                    $this->call('migrate', ['--path' => $migrationPath]);
+                    $migratedAny = true;
+                }
+            }
+
+            if (! $migratedAny) {
+                $this->warn('  <fg=yellow>No migration files found to run. SKIPPED!</>');
             } else {
-                $this->warn('  <fg=yellow>Migration file not found. SKIPPED !</>');
+                $this->info('  <fg=green>All package migrations executed.</>');
             }
         }
     }

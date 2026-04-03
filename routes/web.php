@@ -11,8 +11,6 @@ Route::prefix(config('logic-as-data.route.prefix'))
         Route::prefix('api')->as('api.')->group(function () {
             Route::patch('logic-rules/{id}/restore', [LogicRuleController::class, 'restore'])
                 ->name('logic-rules.restore');
-            Route::delete('logic-rules/{id}/force', [LogicRuleController::class, 'forceDelete'])
-                ->name('logic-rules.force-delete');
 
             Route::apiResource('logic-rules', LogicRuleController::class)
                 ->names('logic-rules');

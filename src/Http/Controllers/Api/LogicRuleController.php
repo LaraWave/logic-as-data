@@ -79,14 +79,6 @@ class LogicRuleController extends Controller
         return response()->json(['data' => $rule]);
     }
 
-    public function forceDelete($id)
-    {
-        $rule = LogicRule::withTrashed()->findOrFail($id);
-        $rule->forceDelete();
-
-        return response()->json([]);
-    }
-
     public function restore($id)
     {
         $rule = LogicRule::withTrashed()->findOrFail($id);

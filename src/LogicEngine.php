@@ -2,70 +2,102 @@
 
 namespace LaraWave\LogicAsData;
 
-use LaraWave\LogicAsData\Models\LogicRule;
+use LaraWave\LogicAsData\Services\TelemetryRecorder;
+use LaraWave\LogicAsData\Enums\EvaluationStrategy;
+use LaraWave\LogicAsData\Services\TraceBuilder;
+use LaraWave\LogicAsData\Enums\TraceStatus;
 use LaraWave\LogicAsData\Enums\RuleStatus;
-use Illuminate\Support\Facades\Cache;
+use LaraWave\LogicAsData\Models\LogicRule;
 use LaraWave\LogicAsData\LogicRegistry;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
-use RuntimeException;
+use Throwable;
 
 class LogicEngine
 {
-    public function __construct(private LogicRegistry $registry) {}
+    public function __construct(
+        private LogicRegistry $registry,
+        private TelemetryRecorder $recorder
+    ) {}
 
     /**
-     * EVALUATION ONLY: Determine if any active rules for a hook satisfy the context.
-     * This DOES NOT execute actions. It's useful for gating logic (e.g., if(passes)).
-     *
-     * @param string $hook The feature alias or hook name.
-     * @param array $context The runtime state.
-     * @param string $strategy How to evaluate multiple rules: 'any' (OR) or 'all' (AND).
-     * @return bool
+     * EVALUATION ONLY: Determine if rules for a hook satisfy the context.
+     * Evaluates the logic tree and generates telemetry record,
+     * but DOES NOT execute actions.
      */
-    public function passes(string $hook, array $context = [], string $strategy = 'any'): bool
-    {
+    public function passes(
+        string $hook,
+        array $context = [],
+        EvaluationStrategy $strategy = EvaluationStrategy::ANY
+    ): bool {
         $rules = $this->getRulesForHook($hook);
 
-        // If no rules exist for this feature, it's inactive.
         if ($rules->isEmpty()) {
             return false;
         }
 
         $evaluator = $this->registry->evaluator('default');
 
-        if ($strategy === 'all') {
-            // ---------------------------------------------------------
-            // THE "ALL" STRATEGY (AND)
-            // Every single rule must evaluate to true.
-            // ---------------------------------------------------------
-            foreach ($rules as $rule) {
-                $predicate = $rule->definition['predicate'] ?? [];
-                if (! $evaluator->evaluate($predicate, $context)) {
-                    return false; // One rule failed, so the 'all' condition fails immediately.
-                }
-            }
-            return true; // all rules passed
-        }
+        $traces = [];
+        $overallStartTime = microtime(true);
+        $finalResult = $strategy === EvaluationStrategy::ALL;
 
-        // ---------------------------------------------------------
-        // THE "ANY" STRATEGY (OR) - Default
-        // At least any one rule needs to evaluate to true.
-        // ---------------------------------------------------------
         foreach ($rules as $rule) {
+            $startTime = microtime(true);
+            $status = TraceStatus::FAILED;
+            $thrownException = null;
+
             $predicate = $rule->definition['predicate'] ?? [];
-            if ($evaluator->evaluate($predicate, $context)) {
-                // If even one rule passes, stop checking and return true immediately
-                return true;
+            $traceBuilder = new TraceBuilder($predicate);
+
+            try {
+                if ($evaluator->evaluate($predicate, $context, $traceBuilder)) {
+                    $status = TraceStatus::PASSED;
+                }
+            } catch (Throwable $e) {
+                $status = TraceStatus::ERROR;
+                $thrownException = $e;
+            }
+
+            $traces[] = [
+                'logic_rule_id' => $rule->id,
+                'status'        => $status->value,
+                'error'         => $thrownException ? $thrownException->getMessage() : null,
+                'duration'      => round((microtime(true) - $startTime) * 1000, 2),
+                'snapshots'     => [
+                    'predicate' => $traceBuilder->toArray(),
+                    'actions'   => null
+                ],
+            ];
+
+            if ($thrownException) {
+                break;
+            }
+
+            if ($strategy === EvaluationStrategy::ALL && $status === TraceStatus::FAILED) {
+                $finalResult = false;
+                break;
+            }
+
+            if ($strategy === EvaluationStrategy::ANY && $status === TraceStatus::PASSED) {
+                $finalResult = true;
+                break;
             }
         }
 
-        return false; // nothing passed.
+        $totalDuration = round((microtime(true) - $overallStartTime) * 1000, 2);
+        $this->recorder->record($hook, $context, $traces, $totalDuration);
+
+        if ($thrownException) {
+            throw $thrownException;
+        }
+
+        return $finalResult;
     }
 
     /**
-     * EVALUATE AND EXECUTE: The main entry point. 
-     * Finds rules for a hook, checks conditions, and fires their actions if passed.
+     * Evaluates conditions and fires assigned actions if any.
      *
      * @param string $hook
      * @param array $context
@@ -74,41 +106,80 @@ class LogicEngine
     public function trigger(string $hook, array $context = []): void
     {
         $rules = $this->getRulesForHook($hook);
+
+        if ($rules->isEmpty()) {
+            return;
+        }
+
         $evaluator = $this->registry->evaluator('default');
 
+        $traces = [];
+        $overallStartTime = microtime(true);
+
         foreach ($rules as $rule) {
+            $startTime = microtime(true);
+            $status = TraceStatus::FAILED;
+            $thrownException = null;
+            $actions = null;
+
             $predicate = $rule->definition['predicate'] ?? [];
-            if ($evaluator->evaluate($predicate, $context)) {
-                $actions = $rule->definition['actions'] ?? [];
-                $this->executeActions($actions, $context);
+            $traceBuilder = new TraceBuilder($predicate);
+
+            try {
+                if ($evaluator->evaluate($predicate, $context, $traceBuilder)) {
+                    $status = TraceStatus::PASSED;
+                    $actions = $rule->definition['actions'] ?? [];
+
+                    $this->executeActions($actions, $context);
+                }
+            } catch (Throwable $e) {
+                $status = TraceStatus::ERROR;
+                $thrownException = $e;
             }
+
+            $traces[] = [
+                'logic_rule_id' => $rule->id,
+                'status'        => $status->value,
+                'error'         => $thrownException ? $thrownException->getMessage() : null,
+                'duration'      => round((microtime(true) - $startTime) * 1000, 2),
+                'snapshots'     => [
+                    'predicate' => $traceBuilder->toArray(), 
+                    'actions'   => $actions
+                ],
+            ];
+
+            if ($thrownException) {
+                break;
+            }
+        }
+
+        $totalDuration = round((microtime(true) - $overallStartTime) * 1000, 2);
+        $this->recorder->record($hook, $context, $traces, $totalDuration);
+
+        if ($thrownException) {
+            throw $thrownException;
         }
     }
 
     /**
-     * Retrieve all rules for a hook, respecting the caching layer.
+     * Retrieve all active rules for a hook
      *
      * @param string $hook
-     * @return \Illuminate\Support\Collection<int, LogicRule>
+     * @return \Illuminate\Support\Collection
      */
     public function getRulesForHook(string $hook): Collection
     {
-        $cacheConfig = config('logic-as-data.cache');
-
-        if (! config('logic-as-data.cache.enabled')) {
+        if (! config('logic-as-data.cache.enabled', true)) {
             return $this->fetchRules($hook);
         }
 
         return Cache::remember(
-            config('logic-as-data.cache.key') . ':hook:' . $hook,
-            config('logic-as-data.cache.ttl'),
+            config('logic-as-data.cache.key', 'logic_rules') . ':hook:' . $hook,
+            config('logic-as-data.cache.ttl', 3600),
             fn () => $this->fetchRules($hook)
         );
     }
 
-    /**
-     * Perform the actual database query for active rules.
-     */
     protected function fetchRules(string $hook): Collection
     {
         return LogicRule::query()
@@ -119,10 +190,11 @@ class LogicEngine
     }
 
     /**
-     * Safely executes a single action
+     * Executes configured actions sequentially.
      *
-     * @param array $actionConfig The individual action from the JSON.
+     * @param array $actions Array of actions from the JSON definition.
      * @param array $context The data payload.
+     * @throws InvalidArgumentException
      */
     protected function executeActions(array $actions, array $context): void
     {
@@ -134,7 +206,6 @@ class LogicEngine
             }
 
             $params = $action['params'] ?? [];
-
             $this->registry->action($alias)->execute($alias, $params, $context);
         }
     }

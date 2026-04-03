@@ -5,8 +5,8 @@ use LaraWave\LogicAsData\Evaluators\PredicateEvaluator;
 use LaraWave\LogicAsData\Extractors\SourceExtractor;
 use LaraWave\LogicAsData\Extractors\UserExtractor;
 use LaraWave\LogicAsData\Operators\EqualsOperator;
-use Illuminate\Foundation\Auth\User;
 use LaraWave\LogicAsData\LogicRegistry;
+use Illuminate\Foundation\Auth\User;
 
 // ---------------------------------------------------------
 // DEFINE MOCK CLASSES

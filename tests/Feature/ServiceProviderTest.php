@@ -39,7 +39,11 @@ test('it merges the default configuration', function () {
     expect($config)->toBeArray();
 
     expect(config('logic-as-data.cache'))->toBeArray();
-    expect(config('logic-as-data.table_name'))->toBeString();
+    expect(config('logic-as-data.analytics'))->toBeArray();
+    expect(config('logic-as-data.analytics.enabled'))->toBeBool();
+    expect(config('logic-as-data.route'))->toBeArray();
+    expect(config('logic-as-data.tables'))->toBeArray();
+    expect(config('logic-as-data.tables.rules'))->toBeString();
 });
 
 test('it boots and registers all default core components into the registry', function () {

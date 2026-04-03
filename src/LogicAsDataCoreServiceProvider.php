@@ -268,7 +268,12 @@ class LogicAsDataCoreServiceProvider extends ServiceProvider
         // Allow developers to publish the database migration using:
         // php artisan vendor:publish --tag="logic-as-data-migrations"
         $this->publishes([
-            __DIR__.'/../database/migrations/2026_03_21_053426_create_logic_rules_table.php' => $this->getMigrationFileName('create_logic_rules_table.php'),
+            __DIR__.'/../database/migrations/2026_03_21_053426_create_logic_rules_table.php' 
+                => $this->getMigrationFileName('create_logic_rules_table.php', 0),
+            __DIR__.'/../database/migrations/2026_04_02_172644_create_logic_telemetry_table.php' 
+                => $this->getMigrationFileName('create_logic_telemetry_table.php', 1),
+            __DIR__.'/../database/migrations/2026_04_03_060144_create_logic_traces_table.php' 
+                => $this->getMigrationFileName('create_logic_traces_table.php', 2),
         ], 'logic-as-data-migrations');
 
         // Allow developers to publish the service provider using:
@@ -282,19 +287,17 @@ class LogicAsDataCoreServiceProvider extends ServiceProvider
      * Generate the migration filename.
      * Returns the existing migration file path or generates a new one.
      */
-    private function getMigrationFileName(string $fileName): string
+    private function getMigrationFileName(string $fileName, int $offset = 0): string
     {
-        $timestamp = date('Y_m_d_His');
+        $timestamp = date('Y_m_d_His', time() + $offset);
+
         $fileSystem = $this->app->make(Filesystem::class);
-        // Get the host application's database/migrations path
         $path = $this->app->databasePath('migrations' . DIRECTORY_SEPARATOR);
 
-        // Look for any existing file ending with our migration name (e.g., *_create_logic_rules_table.php) in the host application's database/migrations 
         $existingFileName = collect($fileSystem->glob($path . '*_' . $fileName))->first();
 
-        // If migration file exists, return the existing filename so it gets safely overwritten
-        // If it doesn't exists, create a new filename with the current timestamp
-        // This prevents duplicate migration crashes
+        // If migration file exists, return the existing filename
+        // If it doesn't exists, create a new filename
         return $existingFileName ?: "{$path}{$timestamp}_{$fileName}";
     }
 }

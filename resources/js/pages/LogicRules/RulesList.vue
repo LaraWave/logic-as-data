@@ -119,10 +119,6 @@
                                     </svg>
                                     <span>Restore</span>
                                 </button>
-
-                                <button @click="forceDeleteRule(rule.id)" class="flex items-center space-x-1 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors cursor-pointer" title="Permanently delete this rule">
-                                    Permanent Delete
-                                </button>
                             </template>
                         </div>
                     </div>
@@ -198,21 +194,6 @@ const deleteRule = async (id) => {
         console.log('Rule trashed.');
     } catch (err) {
         alert('Failed to delete the rule: ' + err.message);
-    }
-};
-
-const forceDeleteRule = async (id) => {
-    const message = 'Are you sure? This will permanently delete the rule and cannot be undone.';
-
-    if (! confirm(message)) return;
-
-    try {
-        const endpoint = `logic-rules/${id}/force`;
-        await api.patch(endpoint);
-        await fetchRules();
-        console.log('Rule purged.');
-    } catch (err) {
-        alert('Failed to permanently delete the rule: ' + err.message);
     }
 };
 

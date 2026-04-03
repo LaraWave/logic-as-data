@@ -45,6 +45,6 @@ class LogicRule extends Model
      */
     public function getTable(): string
     {
-        return config('logic-as-data.table_name', 'logic_rules');
+        return config('logic-as-data.tables.rules', 'logic_rules');
     }
 }

@@ -147,7 +147,10 @@ class LogicRuleFactory extends Factory
                         [
                             'source' => ['alias' => 'user.is_verified'],
                             'operator' => 'equals',
-                            'target' => true
+                            'target' => [
+                                'alias' => 'core.literal',
+                                'params' => ['value' => true, 'value_type' => 'boolean']
+                            ]
                         ]
                     ]
                 ],

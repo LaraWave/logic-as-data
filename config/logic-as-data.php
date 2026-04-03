@@ -2,6 +2,14 @@
 
 return [
 
+    'analytics' => [
+        /*
+         * Enable or disable execution tracing. 
+         * Set to false in high-throughput environments to save database space.
+         */
+        'enabled' => env('LOGIC_AS_DATA_ANALYTICS_ENABLED', true),
+    ],
+
     'route' => [
         /*
         |--------------------------------------------------------------------------
@@ -37,8 +45,15 @@ return [
     | Change this if "logic_rules" conflicts with an existing app table.
     |
     */
-
-    'table_name' => env('LOGIC_AS_DATA_TABLE_NAME', 'logic_rules'),
+    'tables' => [
+        /*
+         * The table names used by the package. Change these if they conflict
+         * with existing tables in your database.
+         */
+        'rules'  => env('LOGIC_AS_DATA_RULES_TABLE', 'logic_rules'),
+        'telemetry' => env('LOGIC_AS_DATA_TELEMETRY_TABLE', 'logic_telemetry'),
+        'traces' => env('LOGIC_AS_DATA_TRACES_TABLE', 'logic_traces'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

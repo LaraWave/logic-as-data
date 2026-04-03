@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $tableName = config('logic-as-data.table_name', 'logic_rules');
+        $tableName = config('logic-as-data.tables.rules');
 
         Schema::create($tableName, function (Blueprint $table) {
             $table->id();
@@ -44,8 +44,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        $tableName = config('logic-as-data.table_name', 'logic_rules');
-        
+        $tableName = config('logic-as-data.tables.rules');
+
         Schema::dropIfExists($tableName);
     }
 };

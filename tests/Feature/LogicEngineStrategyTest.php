@@ -1,7 +1,8 @@
 <?php
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use LaraWave\LogicAsData\Extractors\SourceExtractor;
+use LaraWave\LogicAsData\Enums\EvaluationStrategy;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use LaraWave\LogicAsData\Resolvers\TargetResolver;
 use LaraWave\LogicAsData\Facades\LogicEngine;
 use LaraWave\LogicAsData\Models\LogicRule;
@@ -168,7 +169,9 @@ test('Strategy: ALL - Returns false if Rule A passes but Rule B fails', function
     ];
 
     // Force strategy 'all'
-    expect(LogicEngine::passes('checkout.premium_upgrade', $context, 'all'))->toBeFalse();
+    expect(
+        LogicEngine::passes('checkout.premium_upgrade', $context, EvaluationStrategy::ALL)
+    )->toBeFalse();
 });
 
 test('Strategy: ANY - Returns false if both rules fail', function () {
@@ -197,5 +200,7 @@ test('Strategy: ALL - Returns true if both rules pass', function () {
         'user_status' => 'active' 
     ];
 
-    expect(LogicEngine::passes('checkout.premium_upgrade', $context, 'all'))->toBeTrue();
+    expect(
+        LogicEngine::passes('checkout.premium_upgrade', $context, EvaluationStrategy::ALL)
+    )->toBeTrue();
 });
