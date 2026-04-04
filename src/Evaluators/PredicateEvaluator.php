@@ -2,7 +2,7 @@
 
 namespace LaraWave\LogicAsData\Evaluators;
 
-use LaraWave\LogicAsData\Services\TraceBuilder;
+use LaraWave\LogicAsData\Telemetry\ClauseSnapshot;
 use LaraWave\LogicAsData\Enums\ClauseStatus;
 use InvalidArgumentException;
 use Throwable;
@@ -18,11 +18,11 @@ class PredicateEvaluator extends Evaluator
     public function evaluate(
         array $predicate,
         array $context,
-        ?TraceBuilder $traceBuilder = null
+        ?ClauseSnapshot $snapshot = null
     ): bool {
-        $traceBuilder = $traceBuilder ?? new TraceBuilder($predicate);
+        $snapshot = $snapshot ?? new ClauseSnapshot($predicate);
 
-        return $this->evaluateNode($predicate, $context, $traceBuilder);
+        return $this->evaluateNode($predicate, $context, $snapshot);
     }
 
     /**
@@ -31,22 +31,22 @@ class PredicateEvaluator extends Evaluator
     private function evaluateNode(
         array $node,
         array $context,
-        TraceBuilder $traceBuilder
+        ClauseSnapshot $snapshot
     ): bool {
         if (isset($node['clauses']) || isset($node['combinator'])) {
-            return $this->evaluateGroup($node, $context, $traceBuilder);
+            return $this->evaluateGroup($node, $context, $snapshot);
         }
 
-        return $this->evaluateSingle($node, $context, $traceBuilder);
+        return $this->evaluateSingle($node, $context, $snapshot);
     }
 
     /**
-     * Evaluates a collection of clauses
+     * Evaluates a collection of clauses recursively.
      */
     private function evaluateGroup(
         array $group,
         array $context,
-        TraceBuilder $traceBuilder
+        ClauseSnapshot $snapshot
     ): bool {
         $startTime = microtime(true);
         $combinator = strtolower($group['combinator'] ?? 'and');
@@ -56,7 +56,7 @@ class PredicateEvaluator extends Evaluator
         $status = ClauseStatus::FAILED;
 
         if (empty($clauses)) {
-            $traceBuilder->capture(
+            $snapshot->capture(
                 ClauseStatus::PASSED,
                 round((microtime(true) - $startTime) * 1000, 2)
             );
@@ -65,22 +65,20 @@ class PredicateEvaluator extends Evaluator
 
         try {
             foreach ($clauses as $clause) {
-                $childBuilder = new TraceBuilder($clause);
-                $traceBuilder->addChild($childBuilder);
+                $childSnapshot = new ClauseSnapshot($clause);
+                $snapshot->addChild($childSnapshot);
 
                 if ($shortCircuited) {
-                    $childBuilder->capture(ClauseStatus::SKIPPED, 0);
+                    $childSnapshot->capture(ClauseStatus::SKIPPED, 0);
                     continue;
                 }
 
-                $result = $this->evaluateNode($clause, $context, $childBuilder);
+                $result = $this->evaluateNode($clause, $context, $childSnapshot);
 
-                // If combinator is 'and', and one fails, the whole group fails
                 if ($combinator === 'and' && !$result) {
                     $shortCircuited = true;
                 }
 
-                // If combinator is 'or', and one passes, the whole group passes
                 if ($combinator === 'or' && $result) {
                     $shortCircuited = true;
                 }
@@ -96,7 +94,7 @@ class PredicateEvaluator extends Evaluator
             throw $e;
         } finally {
             $duration = round((microtime(true) - $startTime) * 1000, 2);
-            $traceBuilder->capture($status, $duration);
+            $snapshot->capture($status, $duration);
         }
     }
 
@@ -106,7 +104,7 @@ class PredicateEvaluator extends Evaluator
     private function evaluateSingle(
         array $clause,
         array $context,
-        TraceBuilder $traceBuilder
+        ClauseSnapshot $snapshot
     ): bool {
         $startTime = microtime(true);
         $status = ClauseStatus::FAILED;
@@ -128,6 +126,7 @@ class PredicateEvaluator extends Evaluator
             $passed = $this->registry
                 ->operator($operatorKey)
                 ->check($sourceValue, $targetValue);
+                
             $status = $passed ? ClauseStatus::PASSED : ClauseStatus::FAILED;
 
             return $passed;
@@ -137,7 +136,7 @@ class PredicateEvaluator extends Evaluator
             throw $e;
         } finally {
             $duration = round((microtime(true) - $startTime) * 1000, 2);
-            $traceBuilder->capture($status, $duration, $analytics);
+            $snapshot->capture($status, $duration, $analytics);
         }
     }
 

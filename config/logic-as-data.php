@@ -2,12 +2,25 @@
 
 return [
 
-    'analytics' => [
+    'telemetry' => [
         /*
          * Enable or disable execution tracing. 
          * Set to false in high-throughput environments to save database space.
          */
-        'enabled' => env('LOGIC_AS_DATA_ANALYTICS_ENABLED', true),
+        'enabled' => env('LOGIC_AS_DATA_TELEMETRY_ENABLED', true),
+
+        /**
+         * Telemetry Strict Mode
+         * 
+         * When enabled, any failure during the telemetry recording process 
+         * (e.g., database connection issues, missing tables, JSON errors etc) 
+         * will throw an exception and halt the application.
+         * 
+         * RECOMMENDED: Keep true in 'local' to catch bugs early.
+         * RECOMMENDED: Keep false in 'production' to prevent telemetry 
+         * failures from crashing the main user request.
+         */
+        'strict' => env('LOGIC_AS_DATA_TELEMETRY_STRICT', env('APP_ENV') === 'local'),
     ],
 
     'route' => [

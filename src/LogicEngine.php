@@ -2,13 +2,12 @@
 
 namespace LaraWave\LogicAsData;
 
-use LaraWave\LogicAsData\Services\TelemetryRecorder;
+use LaraWave\LogicAsData\Telemetry\TelemetrySession;
+use LaraWave\LogicAsData\Telemetry\ClauseSnapshot;
+use LaraWave\LogicAsData\Telemetry\RuleTrace;
 use LaraWave\LogicAsData\Enums\EvaluationStrategy;
-use LaraWave\LogicAsData\Services\TraceBuilder;
-use LaraWave\LogicAsData\Enums\TraceStatus;
 use LaraWave\LogicAsData\Enums\RuleStatus;
 use LaraWave\LogicAsData\Models\LogicRule;
-use LaraWave\LogicAsData\LogicRegistry;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
@@ -17,13 +16,12 @@ use Throwable;
 class LogicEngine
 {
     public function __construct(
-        private LogicRegistry $registry,
-        private TelemetryRecorder $recorder
+        private LogicRegistry $registry
     ) {}
 
     /**
      * EVALUATION ONLY: Determine if rules for a hook satisfy the context.
-     * Evaluates the logic tree and generates telemetry record,
+     * Evaluates the logic tree and generates telemetry records,
      * but DOES NOT execute actions.
      */
     public function passes(
@@ -39,55 +37,47 @@ class LogicEngine
 
         $evaluator = $this->registry->evaluator('default');
 
-        $traces = [];
-        $overallStartTime = microtime(true);
+        $session = new TelemetrySession($hook, $context);
+        
         $finalResult = $strategy->isAll();
+        $thrownException = null;
 
         foreach ($rules as $rule) {
-            $startTime = microtime(true);
-            $status = TraceStatus::FAILED;
-            $thrownException = null;
-
             $predicate = $rule->definition['predicate'] ?? [];
-            $traceBuilder = new TraceBuilder($predicate);
+
+            $trace = new RuleTrace($rule);
+            $snapshot = new ClauseSnapshot($predicate);
+            $rulePassed = false;
 
             try {
-                if ($evaluator->evaluate($predicate, $context, $traceBuilder)) {
-                    $status = TraceStatus::PASSED;
+                $rulePassed = $evaluator->evaluate($predicate, $context, $snapshot);
+
+                if ($rulePassed) {
+                    $trace->markPassed();
                 }
             } catch (Throwable $e) {
-                $status = TraceStatus::ERROR;
+                $trace->markError($e);
                 $thrownException = $e;
             }
 
-            $traces[] = [
-                'logic_rule_id' => $rule->id,
-                'status'        => $status->value,
-                'error'         => $thrownException ? $thrownException->getMessage() : null,
-                'duration'      => round((microtime(true) - $startTime) * 1000, 2),
-                'snapshots'     => [
-                    'predicate' => $traceBuilder->toArray(),
-                    'actions'   => null
-                ],
-            ];
+            $session->push($trace, $snapshot);
 
             if ($thrownException) {
                 break;
             }
 
-            if ($strategy->isAll() && $status === TraceStatus::FAILED) {
+            if ($strategy->isAll() && !$rulePassed) {
                 $finalResult = false;
                 break;
             }
 
-            if ($strategy->isAny() && $status === TraceStatus::PASSED) {
+            if ($strategy->isAny() && $rulePassed) {
                 $finalResult = true;
                 break;
             }
         }
 
-        $totalDuration = round((microtime(true) - $overallStartTime) * 1000, 2);
-        $this->recorder->record($hook, $context, $traces, $totalDuration);
+        $session->save();
 
         if ($thrownException) {
             throw $thrownException;
@@ -98,10 +88,6 @@ class LogicEngine
 
     /**
      * Evaluates conditions and fires assigned actions if any.
-     *
-     * @param string $hook
-     * @param array $context
-     * @return void
      */
     public function trigger(string $hook, array $context = []): void
     {
@@ -112,61 +98,41 @@ class LogicEngine
         }
 
         $evaluator = $this->registry->evaluator('default');
-
-        $traces = [];
-        $overallStartTime = microtime(true);
+        $session = new TelemetrySession($hook, $context);
+        $thrownException = null;
 
         foreach ($rules as $rule) {
-            $startTime = microtime(true);
-            $status = TraceStatus::FAILED;
-            $thrownException = null;
-            $actions = null;
-
             $predicate = $rule->definition['predicate'] ?? [];
-            $traceBuilder = new TraceBuilder($predicate);
+
+            $trace = new RuleTrace($rule);
+            $snapshot = new ClauseSnapshot($predicate);
 
             try {
-                if ($evaluator->evaluate($predicate, $context, $traceBuilder)) {
-                    $status = TraceStatus::PASSED;
+                if ($evaluator->evaluate($predicate, $context, $snapshot)) {
                     $actions = $rule->definition['actions'] ?? [];
 
+                    $trace->markPassed($actions);
                     $this->executeActions($actions, $context);
                 }
             } catch (Throwable $e) {
-                $status = TraceStatus::ERROR;
+                $trace->markError($e);
                 $thrownException = $e;
             }
 
-            $traces[] = [
-                'logic_rule_id' => $rule->id,
-                'status'        => $status->value,
-                'error'         => $thrownException ? $thrownException->getMessage() : null,
-                'duration'      => round((microtime(true) - $startTime) * 1000, 2),
-                'snapshots'     => [
-                    'predicate' => $traceBuilder->toArray(), 
-                    'actions'   => $actions
-                ],
-            ];
+            $session->push($trace, $snapshot);
 
             if ($thrownException) {
                 break;
             }
         }
 
-        $totalDuration = round((microtime(true) - $overallStartTime) * 1000, 2);
-        $this->recorder->record($hook, $context, $traces, $totalDuration);
+        $session->save();
 
         if ($thrownException) {
             throw $thrownException;
         }
     }
 
-    /**
-     * Retrieve all active rules for a hook
-     *
-     * @param string $hook
-     * @return \Illuminate\Support\Collection
-     */
     public function getRulesForHook(string $hook): Collection
     {
         if (! config('logic-as-data.cache.enabled', true)) {
@@ -191,10 +157,6 @@ class LogicEngine
 
     /**
      * Executes configured actions sequentially.
-     *
-     * @param array $actions Array of actions from the JSON definition.
-     * @param array $context The data payload.
-     * @throws InvalidArgumentException
      */
     protected function executeActions(array $actions, array $context): void
     {

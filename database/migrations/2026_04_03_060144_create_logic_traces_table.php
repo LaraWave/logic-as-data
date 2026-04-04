@@ -31,7 +31,7 @@ return new class extends Migration
             $table->text('error')->nullable();
             $table->float('duration', 8, 2)->nullable();
 
-            $table->json('snapshots')->nullable();
+            $table->json('snapshot')->nullable();
 
             $table->timestamps();
         });

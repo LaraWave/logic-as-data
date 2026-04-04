@@ -2,7 +2,7 @@
 
 namespace LaraWave\LogicAsData\Evaluators;
 
-use LaraWave\LogicAsData\Services\TraceBuilder;
+use LaraWave\LogicAsData\Telemetry\ClauseSnapshot;
 use LaraWave\LogicAsData\LogicRegistry;
 
 abstract class Evaluator
@@ -19,6 +19,6 @@ abstract class Evaluator
     abstract public function evaluate(
         array $predicate,
         array $context,
-        ?TraceBuilder $traceBuilder = null
+        ?ClauseSnapshot $snapshot = null
     ): bool;
 }
