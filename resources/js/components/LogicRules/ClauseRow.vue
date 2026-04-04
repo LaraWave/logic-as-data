@@ -57,7 +57,6 @@
                         v-model="clause.target.params" 
                     />
                 </div>
-                <button @click="() => console.log(clause)">ClK</button>
             </div>
         </div>
 

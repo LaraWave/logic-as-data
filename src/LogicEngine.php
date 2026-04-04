@@ -160,6 +160,13 @@ class LogicEngine
         );
     }
 
+    public function clearCacheForHook(string $hook): void
+    {
+        $key = config('logic-as-data.cache.key', 'logic_rules') . ':hook:' . $hook;
+
+        Cache::forget($key);
+    }
+
     protected function fetchRules(string $hook): Collection
     {
         return LogicRule::query()

@@ -28,15 +28,17 @@ use LaraWave\LogicAsData\Operators\BetweenOperator;
 use LaraWave\LogicAsData\Operators\MatchesRegexOperator;
 use LaraWave\LogicAsData\Evaluators\PredicateEvaluator;
 use LaraWave\LogicAsData\Console\Commands\InstallCommand;
+use LaraWave\LogicAsData\Observers\LogicRuleObserver;
 use LaraWave\LogicAsData\Resolvers\DateTimeResolver;
 use LaraWave\LogicAsData\Resolvers\LiteralResolver;
 use LaraWave\LogicAsData\Resolvers\ConfigResolver;
 use LaraWave\LogicAsData\Actions\LogMessageAction;
 use LaraWave\LogicAsData\Actions\RedirectAction;
 use LaraWave\LogicAsData\Actions\LogoutAction;
+use LaraWave\LogicAsData\Models\LogicRule;
+use LaraWave\LogicAsData\LogicRegistry;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Filesystem\Filesystem;
-use LaraWave\LogicAsData\LogicRegistry;
 use Illuminate\Support\Facades\Gate;
 use LaraWave\LogicAsData\LogicEngine;
 
@@ -236,6 +238,8 @@ class LogicAsDataCoreServiceProvider extends ServiceProvider
         Gate::define('viewLogicAsData', function ($user = null) {
             return app()->environment('local');
         });
+
+        LogicRule::observe(LogicRuleObserver::class);
     }
 
     /**
