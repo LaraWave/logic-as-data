@@ -18,11 +18,11 @@ class PredicateEvaluator extends Evaluator
     public function evaluate(
         array $predicate,
         array $context,
-        ?ClauseSnapshot $snapshot = null
+        ?ClauseSnapshot $clauseSnapshot = null
     ): bool {
-        $snapshot = $snapshot ?? new ClauseSnapshot($predicate);
+        $clauseSnapshot = $clauseSnapshot ?? new ClauseSnapshot($predicate);
 
-        return $this->evaluateNode($predicate, $context, $snapshot);
+        return $this->evaluateNode($predicate, $context, $clauseSnapshot);
     }
 
     /**
@@ -31,13 +31,13 @@ class PredicateEvaluator extends Evaluator
     private function evaluateNode(
         array $node,
         array $context,
-        ClauseSnapshot $snapshot
+        ClauseSnapshot $clauseSnapshot
     ): bool {
         if (isset($node['clauses']) || isset($node['combinator'])) {
-            return $this->evaluateGroup($node, $context, $snapshot);
+            return $this->evaluateGroup($node, $context, $clauseSnapshot);
         }
 
-        return $this->evaluateSingle($node, $context, $snapshot);
+        return $this->evaluateSingle($node, $context, $clauseSnapshot);
     }
 
     /**
@@ -46,17 +46,17 @@ class PredicateEvaluator extends Evaluator
     private function evaluateGroup(
         array $group,
         array $context,
-        ClauseSnapshot $snapshot
+        ClauseSnapshot $clauseSnapshot
     ): bool {
         $startTime = microtime(true);
         $combinator = strtolower($group['combinator'] ?? 'and');
         $clauses = $group['clauses'] ?? [];
-        
+
         $shortCircuited = false;
         $status = ClauseStatus::FAILED;
 
         if (empty($clauses)) {
-            $snapshot->capture(
+            $clauseSnapshot->capture(
                 ClauseStatus::PASSED,
                 round((microtime(true) - $startTime) * 1000, 2)
             );
@@ -66,7 +66,7 @@ class PredicateEvaluator extends Evaluator
         try {
             foreach ($clauses as $clause) {
                 $childSnapshot = new ClauseSnapshot($clause);
-                $snapshot->addChild($childSnapshot);
+                $clauseSnapshot->addChild($childSnapshot);
 
                 if ($shortCircuited) {
                     $childSnapshot->capture(ClauseStatus::SKIPPED, 0);
@@ -94,7 +94,7 @@ class PredicateEvaluator extends Evaluator
             throw $e;
         } finally {
             $duration = round((microtime(true) - $startTime) * 1000, 2);
-            $snapshot->capture($status, $duration);
+            $clauseSnapshot->capture($status, $duration);
         }
     }
 
@@ -104,7 +104,7 @@ class PredicateEvaluator extends Evaluator
     private function evaluateSingle(
         array $clause,
         array $context,
-        ClauseSnapshot $snapshot
+        ClauseSnapshot $clauseSnapshot
     ): bool {
         $startTime = microtime(true);
         $status = ClauseStatus::FAILED;
@@ -136,7 +136,7 @@ class PredicateEvaluator extends Evaluator
             throw $e;
         } finally {
             $duration = round((microtime(true) - $startTime) * 1000, 2);
-            $snapshot->capture($status, $duration, $findings);
+            $clauseSnapshot->capture($status, $duration, $findings);
         }
     }
 

@@ -5,6 +5,7 @@ namespace LaraWave\LogicAsData;
 use LaraWave\LogicAsData\Telemetry\TelemetryRecorder;
 use LaraWave\LogicAsData\Telemetry\ClauseSnapshot;
 use LaraWave\LogicAsData\Enums\EvaluationStrategy;
+use Symfony\Component\HttpFoundation\Response;
 use LaraWave\LogicAsData\Telemetry\RuleTrace;
 use LaraWave\LogicAsData\Enums\RuleStatus;
 use LaraWave\LogicAsData\Models\LogicRule;
@@ -49,11 +50,11 @@ class LogicEngine
             $predicate = $rule->definition['predicate'] ?? [];
 
             $trace = new RuleTrace($rule);
-            $snapshot = new ClauseSnapshot($predicate);
+            $clauseSnapshot = new ClauseSnapshot($predicate);
             $rulePassed = false;
 
             try {
-                $rulePassed = $evaluator->evaluate($predicate, $context, $snapshot);
+                $rulePassed = $evaluator->evaluate($predicate, $context, $clauseSnapshot);
 
                 if ($rulePassed) {
                     $trace->markPassed();
@@ -63,7 +64,7 @@ class LogicEngine
                 $thrownException = $e;
             }
 
-            $recorder->add($trace, $snapshot);
+            $recorder->add($trace, $clauseSnapshot);
 
             if ($thrownException) {
                 break;
@@ -96,11 +97,12 @@ class LogicEngine
         string $hook,
         array $context = [],
         array|Model|null $subjects = null,
-    ): void {
+    ): mixed {
         $rules = $this->getRulesForHook($hook);
+        $result = null;
 
         if ($rules->isEmpty()) {
-            return;
+            return null;
         }
 
         $evaluator = $this->registry->evaluator('default');
@@ -112,23 +114,23 @@ class LogicEngine
             $predicate = $rule->definition['predicate'] ?? [];
 
             $trace = new RuleTrace($rule);
-            $snapshot = new ClauseSnapshot($predicate);
+            $clauseSnapshot = new ClauseSnapshot($predicate);
 
             try {
-                if ($evaluator->evaluate($predicate, $context, $snapshot)) {
+                if ($evaluator->evaluate($predicate, $context, $clauseSnapshot)) {
+                    $trace->markPassed();
                     $actions = $rule->definition['actions'] ?? [];
-
-                    $trace->markPassed($actions);
-                    $this->executeActions($actions, $context);
+                    $trace->registerActions($actions);
+                    $result = $this->executeActions($actions, $context, $trace);
                 }
             } catch (Throwable $e) {
                 $trace->markError($e);
                 $thrownException = $e;
             }
 
-            $recorder->add($trace, $snapshot);
+            $recorder->add($trace, $clauseSnapshot);
 
-            if ($thrownException) {
+            if ($thrownException || ($result instanceof Response)) {
                 break;
             }
         }
@@ -138,6 +140,11 @@ class LogicEngine
         if ($thrownException) {
             throw $thrownException;
         }
+
+        if ($result instanceof Response) {
+            return $result;
+        }
+        return null;;
     }
 
     public function getRulesForHook(string $hook): Collection
@@ -162,12 +169,13 @@ class LogicEngine
             ->get();
     }
 
-    /**
-     * Executes configured actions sequentially.
-     */
-    protected function executeActions(array $actions, array $context): void
-    {
-        foreach ($actions as $action) {
+    protected function executeActions(
+        array $actions,
+        array $context,
+        RuleTrace $trace
+    ): mixed {
+        $result = null;
+        foreach ($actions as $index => $action) {
             $alias = $action['alias'] ?? null;
 
             if (! $alias) {
@@ -175,7 +183,31 @@ class LogicEngine
             }
 
             $params = $action['params'] ?? [];
-            $this->registry->action($alias)->execute($alias, $params, $context);
+
+            $startTime = microtime(true);
+            $thrownError = null;
+
+            try {
+                $result = $this->registry->action($alias)->execute($alias, $params, $context);
+            } catch (Throwable $e) {
+                $thrownError = $e->getMessage();
+                throw $e;
+            } finally {
+                $duration = (microtime(true) - $startTime) * 1000;
+                if ($actionSnapshot = $trace->getActionSnapshot($index)) {
+                    if ($thrownError) {
+                        $actionSnapshot->markFailed($duration, $thrownError);
+                    } else {
+                        $actionSnapshot->markSuccess($duration);
+                    }
+                }
+            }
+
+            if ($result instanceof Response) {
+                break;
+            }
         }
+
+        return $result;
     }
 }

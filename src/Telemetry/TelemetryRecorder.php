@@ -28,9 +28,9 @@ class TelemetryRecorder
         $this->sessionStartTime = microtime(true);
     }
 
-    public function add(RuleTrace $trace, ClauseSnapshot $snapshot): void
+    public function add(RuleTrace $trace, ClauseSnapshot $clauseSnapshot): void
     {
-        $this->traces[] = $trace->toRecordArray($snapshot);
+        $this->traces[] = $trace->toRecordArray($clauseSnapshot);
     }
 
     public function record(): void

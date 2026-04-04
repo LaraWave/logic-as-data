@@ -19,6 +19,6 @@ abstract class Evaluator
     abstract public function evaluate(
         array $predicate,
         array $context,
-        ?ClauseSnapshot $snapshot = null
+        ?ClauseSnapshot $clauseSnapshot = null
     ): bool;
 }

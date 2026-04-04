@@ -8,7 +8,6 @@ class RedirectAction extends Action
 {
     public function execute(string $alias, array $params, array $context = []): mixed
     {
-        // Safety check: Redirects make no sense in a Console/Queue environment
         if (app()->runningInConsole()) {
             return false;
         }

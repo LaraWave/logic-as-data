@@ -25,10 +25,11 @@ class ClauseSnapshot
         float $duration,
         array $extra = []
     ): void {
-        $this->finding = array_merge([
-            'status'   => $status->value,
-            'duration' => $duration,
-        ], $extra);
+        $metrics = ['status' => $status->value];
+        if ($status !== ClauseStatus::SKIPPED) {
+            $metrics['duration'] = $duration;
+        }
+        $this->finding = array_merge($metrics, $extra);
     }
 
     public function toArray(): array

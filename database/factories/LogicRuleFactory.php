@@ -127,6 +127,9 @@ class LogicRuleFactory extends Factory
                         ]
                     ],
                     [
+                        'alias' => 'auth.logout'
+                    ],
+                    [
                         'alias' => 'web.redirect',
                         'params' => [
                             'url' => 'https://github.com/LaraWave/logic-as-data'
