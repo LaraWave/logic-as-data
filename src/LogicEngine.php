@@ -2,17 +2,17 @@
 
 namespace LaraWave\LogicAsData;
 
-use LaraWave\LogicAsData\Telemetry\TelemetrySession;
+use LaraWave\LogicAsData\Telemetry\TelemetryRecorder;
 use LaraWave\LogicAsData\Telemetry\ClauseSnapshot;
-use LaraWave\LogicAsData\Telemetry\RuleTrace;
 use LaraWave\LogicAsData\Enums\EvaluationStrategy;
+use LaraWave\LogicAsData\Telemetry\RuleTrace;
 use LaraWave\LogicAsData\Enums\RuleStatus;
 use LaraWave\LogicAsData\Models\LogicRule;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use Throwable;
-
 class LogicEngine
 {
     public function __construct(
@@ -27,6 +27,7 @@ class LogicEngine
     public function passes(
         string $hook,
         array $context = [],
+        array|Model|null $subjects = null,
         EvaluationStrategy $strategy = EvaluationStrategy::ANY
     ): bool {
         $rules = $this->getRulesForHook($hook);
@@ -37,7 +38,9 @@ class LogicEngine
 
         $evaluator = $this->registry->evaluator('default');
 
-        $session = new TelemetrySession($hook, $context);
+        $subjectsArray = $subjects instanceof Model ? [$subjects] : ($subjects ?? []);
+
+        $recorder = new TelemetryRecorder($hook, $context, $subjectsArray);
         
         $finalResult = $strategy->isAll();
         $thrownException = null;
@@ -60,7 +63,7 @@ class LogicEngine
                 $thrownException = $e;
             }
 
-            $session->push($trace, $snapshot);
+            $recorder->add($trace, $snapshot);
 
             if ($thrownException) {
                 break;
@@ -77,7 +80,7 @@ class LogicEngine
             }
         }
 
-        $session->save();
+        $recorder->record();
 
         if ($thrownException) {
             throw $thrownException;
@@ -89,8 +92,11 @@ class LogicEngine
     /**
      * Evaluates conditions and fires assigned actions if any.
      */
-    public function trigger(string $hook, array $context = []): void
-    {
+    public function trigger(
+        string $hook,
+        array $context = [],
+        array|Model|null $subjects = null,
+    ): void {
         $rules = $this->getRulesForHook($hook);
 
         if ($rules->isEmpty()) {
@@ -98,7 +104,8 @@ class LogicEngine
         }
 
         $evaluator = $this->registry->evaluator('default');
-        $session = new TelemetrySession($hook, $context);
+        $subjectsArray = $subjects instanceof Model ? [$subjects] : ($subjects ?? []);
+        $recorder = new TelemetryRecorder($hook, $context, $subjectsArray);
         $thrownException = null;
 
         foreach ($rules as $rule) {
@@ -119,14 +126,14 @@ class LogicEngine
                 $thrownException = $e;
             }
 
-            $session->push($trace, $snapshot);
+            $recorder->add($trace, $snapshot);
 
             if ($thrownException) {
                 break;
             }
         }
 
-        $session->save();
+        $recorder->record();
 
         if ($thrownException) {
             throw $thrownException;

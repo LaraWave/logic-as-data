@@ -170,7 +170,7 @@ test('Strategy: ALL - Returns false if Rule A passes but Rule B fails', function
 
     // Force strategy 'all'
     expect(
-        LogicEngine::passes('checkout.premium_upgrade', $context, EvaluationStrategy::ALL)
+        LogicEngine::passes('checkout.premium_upgrade', $context, [], EvaluationStrategy::ALL)
     )->toBeFalse();
 });
 
@@ -201,6 +201,6 @@ test('Strategy: ALL - Returns true if both rules pass', function () {
     ];
 
     expect(
-        LogicEngine::passes('checkout.premium_upgrade', $context, EvaluationStrategy::ALL)
+        LogicEngine::passes('checkout.premium_upgrade', $context, [], EvaluationStrategy::ALL)
     )->toBeTrue();
 });

@@ -15,10 +15,19 @@ return new class extends Migration
 
         Schema::create($tableName, function (Blueprint $table) {
             $table->id();
+
             $table->string('hook')->index();
+
+            $table->string('session_id')->nullable()->index();
+            $table->string('request_id')->index();
+            $table->nullableMorphs('causer');
+
+            $table->json('subjects')->nullable();
             $table->json('context')->nullable();
+
             // Total time(in milliseconds) took for the execution of a whole hook
             $table->float('total_duration', 8, 2)->nullable();
+
             $table->timestamps();
         });
     }

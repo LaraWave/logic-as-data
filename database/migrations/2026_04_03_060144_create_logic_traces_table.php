@@ -29,6 +29,8 @@ return new class extends Migration
 
             $table->string('status')->index();
             $table->text('error')->nullable();
+
+            // Total time(in milliseconds) took for the execution of a whole hook
             $table->float('duration', 8, 2)->nullable();
 
             $table->json('snapshot')->nullable();

@@ -108,7 +108,7 @@ class PredicateEvaluator extends Evaluator
     ): bool {
         $startTime = microtime(true);
         $status = ClauseStatus::FAILED;
-        $analytics = [];
+        $findings = [];
 
         try {
             $operatorKey = $clause['operator'] ?? null;
@@ -120,8 +120,8 @@ class PredicateEvaluator extends Evaluator
             $sourceValue = $this->resolveSource($clause['source'] ?? [], $context);
             $targetValue = $this->resolveTarget($clause['target'] ?? [], $context);
 
-            $analytics['resolved_source'] = $sourceValue;
-            $analytics['resolved_target'] = $targetValue;
+            $findings['resolved_source'] = $sourceValue;
+            $findings['resolved_target'] = $targetValue;
 
             $passed = $this->registry
                 ->operator($operatorKey)
@@ -132,11 +132,11 @@ class PredicateEvaluator extends Evaluator
             return $passed;
         } catch (Throwable $e) {
             $status = ClauseStatus::ERROR;
-            $analytics['error'] = $e->getMessage();
+            $findings['error'] = $e->getMessage();
             throw $e;
         } finally {
             $duration = round((microtime(true) - $startTime) * 1000, 2);
-            $snapshot->capture($status, $duration, $analytics);
+            $snapshot->capture($status, $duration, $findings);
         }
     }
 
