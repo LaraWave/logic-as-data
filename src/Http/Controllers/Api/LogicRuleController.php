@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 class LogicRuleController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $logicRules = LogicRule::orderBy('hook')->orderByDesc('priority');
 
@@ -71,7 +71,7 @@ class LogicRuleController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy($id): JsonResponse
     {
         $rule = LogicRule::withTrashed()->findOrFail($id);
         $rule->delete();
@@ -79,7 +79,7 @@ class LogicRuleController extends Controller
         return response()->json(['data' => $rule]);
     }
 
-    public function restore($id)
+    public function restore($id): JsonResponse
     {
         $rule = LogicRule::withTrashed()->findOrFail($id);
         $rule->restore();

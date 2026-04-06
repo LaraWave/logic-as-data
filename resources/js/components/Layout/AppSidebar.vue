@@ -46,6 +46,7 @@ import { useConfig } from '@/composables/useConfig';
 const { routePrefix } = useConfig();
 
 const menuItems = [
-    { name: 'Logic Rules', routeName: 'logic-rules.index' }
+    { name: 'Logic Rules', routeName: 'logic-rules.index' },
+    { name: 'Telemetry', routeName: 'telemetry.index' }
 ];
 </script>

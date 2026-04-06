@@ -20,6 +20,18 @@ const routes = [
         component: () => import('./pages/LogicRules/RuleBuilder.vue'),
         name: 'logic-rules.edit',
         props: true
+    },
+    {
+        path: '/telemetry',
+        component: () => import('./pages/Telemetry/Index.vue'),
+        name: 'telemetry.index',
+        props: true
+    },
+    {
+        path: '/telemetry/:id',
+        component: () => import('./pages/Telemetry/Show.vue'),
+        name: 'telemetry.show',
+        props: true
     }
 ];
 

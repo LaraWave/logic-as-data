@@ -1,6 +1,7 @@
 <?php
 
 use LaraWave\LogicAsData\Http\Controllers\Api\LogicRuleController;
+use LaraWave\LogicAsData\Http\Controllers\Api\TelemetryController;
 use LaraWave\LogicAsData\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,9 @@ Route::prefix(config('logic-as-data.route.prefix'))
 
             Route::apiResource('logic-rules', LogicRuleController::class)
                 ->names('logic-rules');
+
+            Route::apiResource('telemetry', TelemetryController::class)
+                ->names('telemetry')->only(['index', 'show']);
         });
 
         Route::get('/{any?}', AdminController::class)
