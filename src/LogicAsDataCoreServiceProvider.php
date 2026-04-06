@@ -39,8 +39,8 @@ use LaraWave\LogicAsData\Models\LogicRule;
 use LaraWave\LogicAsData\LogicRegistry;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Facades\Gate;
 use LaraWave\LogicAsData\LogicEngine;
+use Illuminate\Support\Facades\Gate;
 
 class LogicAsDataCoreServiceProvider extends ServiceProvider
 {
@@ -236,7 +236,7 @@ class LogicAsDataCoreServiceProvider extends ServiceProvider
         // Define the gate. By default, it returns false (deny all) 
         // unless the environment is local.
         Gate::define('viewLogicAsData', function ($user = null) {
-            return app()->environment('local');
+            return false;//app()->environment('local');
         });
 
         LogicRule::observe(LogicRuleObserver::class);

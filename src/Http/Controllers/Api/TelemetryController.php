@@ -11,11 +11,6 @@ class TelemetryController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        \LaraWave\LogicAsData\Facades\LogicEngine::trigger('payment.failed', ['user' => (new \Illuminate\Foundation\Auth\User)->forceFill(['email' => 'vip_customer@larawave.com','email_verified_at' => now(),'timezone' => 'Asia/Kolkata'])], [(new \Illuminate\Foundation\Auth\User)->forceFill(['email' => 'vip_customer@larawave.com','email_verified_at' => now(),'timezone' => 'Asia/Kolkata', 'id' => 1010]), ['promo_code' => 'TBK-999'], ['lorem-ipsum' => 'Dolor sit amet']]);
-        \LaraWave\LogicAsData\Facades\LogicEngine::trigger('auth.login', ['user' => (new \Illuminate\Foundation\Auth\User)->forceFill(['email' => 'vip_customer@larawave.com','email_verified_at' => now(),'timezone' => 'Asia/Kolkata'])], [(new \Illuminate\Foundation\Auth\User)->forceFill(['email' => 'vip_customer@larawave.com','email_verified_at' => now(),'timezone' => 'Asia/Kolkata', 'id' => 1010]), ['promo_code' => 'TBK-999'], ['lorem-ipsum' => 'Dolor sit amet']]);
-        \LaraWave\LogicAsData\Facades\LogicEngine::trigger('auth.logout', ['user' => (new \Illuminate\Foundation\Auth\User)->forceFill(['email' => 'vip_customer@larawave.com','email_verified_at' => now(),'timezone' => 'Asia/Kolkata'])], [(new \Illuminate\Foundation\Auth\User)->forceFill(['email' => 'vip_customer@larawave.com','email_verified_at' => now(),'timezone' => 'Asia/Kolkata', 'id' => 1010]), ['promo_code' => 'TBK-999'], ['lorem-ipsum' => 'Dolor sit amet']]);
-        \LaraWave\LogicAsData\Facades\LogicEngine::trigger('order.created', ['user' => (new \Illuminate\Foundation\Auth\User)->forceFill(['email' => 'vip_customer@larawave.com','email_verified_at' => now(),'timezone' => 'Asia/Kolkata'])], [(new \Illuminate\Foundation\Auth\User)->forceFill(['email' => 'vip_customer@larawave.com','email_verified_at' => now(),'timezone' => 'Asia/Kolkata', 'id' => 1010]), ['promo_code' => 'TBK-999'], ['lorem-ipsum' => 'Dolor sit amet']]);
-
         $logs = LogicTelemetry::query()
             ->with('causer')
             ->latest()

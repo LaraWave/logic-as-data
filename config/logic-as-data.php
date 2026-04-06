@@ -41,7 +41,7 @@ return [
         | Default: logic-as-data
         |
         */
-        'prefix' => env('LOGIC_AS_DATA_PREFIX', 'logic-as-data'),
+        'prefix' => env('LOGIC_AS_DATA_PREFIX', 'admin/logic-as-data'),
 
         /**
          * 

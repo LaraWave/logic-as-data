@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use Throwable;
+
 class LogicEngine
 {
     public function __construct(
