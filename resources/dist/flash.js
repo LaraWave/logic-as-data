@@ -1,0 +1,1 @@
+import{k as e}from"./runtime-core.esm-bundler.js";var t=e({message:``,type:``,isVisible:!1,show(e,t=`info`){this.message=e,this.type=t,this.isVisible=!0,setTimeout(()=>this.hide(),5e3)},hide(){this.isVisible=!1,this.message=``}});export{t};

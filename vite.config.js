@@ -4,13 +4,13 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
 export default defineConfig({
+    base: '',
     plugins: [
         vue(),
         tailwindcss(),
     ],
     resolve: {
         alias: {
-            vue: 'vue/dist/vue.esm-bundler.js',
             '@': path.resolve(__dirname, './resources/js')
         },
     },

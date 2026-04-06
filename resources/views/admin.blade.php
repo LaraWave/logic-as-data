@@ -17,13 +17,15 @@
         window.LogicAsData = @json($config);
     </script>
 
-    @if(env('LOGIC_PACKAGE_DEV'))
+    @if(config('logic-as-data.dev_mode'))
         <link rel="stylesheet" href="http://localhost:5199/resources/css/app.css">
         <script type="module" src="http://localhost:5199/@@vite/client"></script>
         <script type="module" src="http://localhost:5199/resources/js/app.js" defer></script>
     @else
-        <link rel="stylesheet" href="{{ asset('vendor/logic-as-data/app.css') }}">
-        <script src="{{ asset('vendor/logic-as-data/app.js') }}" defer></script>
+        {{-- <link rel="stylesheet" href="{{ asset('vendor/logic-as-data/app.css') }}">
+        <script src="{{ asset('vendor/logic-as-data/app.js') }}" defer></script> --}}
+        <link rel="stylesheet" href="{{ asset('vendor/logic-as-data/app.css?v=1.0.1') }}">
+        <script type="module" src="{{ asset('vendor/logic-as-data/app.js?v=1.0.1') }}"></script>
     @endif
 </head>
 <body class="h-full m-0 antialiased bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300">

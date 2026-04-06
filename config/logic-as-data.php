@@ -2,6 +2,15 @@
 
 return [
 
+    /*
+    |--------------------------------------------------------------------------
+    | Package Development Mode
+    |--------------------------------------------------------------------------
+    | When set to true, the Admin UI will load assets via the local Vite server
+    | instead of using the compiled production build.
+    */
+    'dev_mode' => env('LOGIC_AS_DATA_DEV_MODE', false),
+
     'telemetry' => [
         /*
          * Enable or disable execution tracing. 

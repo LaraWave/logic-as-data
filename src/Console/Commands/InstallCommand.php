@@ -38,6 +38,9 @@ class InstallCommand extends Command
         // Publish the migration files
         $this->publishMigrations();
 
+        // Publish the assets
+        $this->publishAssets();
+
         $this->line('<fg=green>Logic As Data has been installed successfully!</>');
 
         // Provide crystal-clear next steps for the developer
@@ -81,6 +84,18 @@ class InstallCommand extends Command
         ]);
 
         $this->line('  <fg=green>Service Provider published.</>');
+    }
+
+    /**
+     * Publish assets
+     */
+    private function publishAssets(): void
+    {
+        Artisan::call('vendor:publish', [
+            '--tag' => 'logic-as-data-assets'
+        ]);
+
+        $this->line('  <fg=green>Assets published.</>');
     }
 
     /**
