@@ -1,0 +1,53 @@
+<?php
+
+namespace {{ namespace }};
+
+use LaraWave\LogicAsData\Resolvers\TargetResolver;
+use Illuminate\Support\Str;
+
+class {{ class }} extends TargetResolver
+{
+    /**
+     * Resolve the dynamic target value.
+     *
+     * @param string $alias The alias used to call this resolver.
+     * @param array $context The real-time data passed to the engine.
+     * @param array $params The parsed JSON parameters.
+     * @return mixed
+     */
+    public function resolve(string $alias, array $context, array $params = []): mixed
+    {
+        // TODO: Implement your resolving logic here.
+        // Example: return config($params['key'] ?? null);
+
+        return null;
+    }
+
+    /**
+     * Provide the UI configuration for this component.
+     *
+     * @param  string  $alias  The registered alias for this class
+     * @return array{label: string, description: string, fields: array}
+     */
+    public static function metadata(string $alias): array
+    {
+        return [
+            // The display name in the Admin UI dropdowns
+            'label' => Str::headline(str_replace('.', ' ', $alias)),
+
+            // A helpful description shown below the selector
+            'description' => '',
+
+            // The array of input fields required to configure this target resolver
+            'fields' => [
+                // 'my_field' => [
+                //     'type' => 'text',
+                //     'label' => 'My Field',
+                //     'default' => '',
+                //     'help' => '',
+                //     'required' => false,
+                // ],
+            ],
+        ];
+    }
+}

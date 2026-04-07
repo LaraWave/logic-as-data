@@ -1,0 +1,51 @@
+<?php
+
+namespace {{ namespace }};
+
+use LaraWave\LogicAsData\Actions\Action;
+use Illuminate\Support\Str;
+
+class {{ class }} extends Action
+{
+    /**
+     * Handle the action defined in the JSON for passing rules.
+     *
+     * @param string $alias The alias that triggered this action.
+     * @param array $params The parsed JSON array of the action.
+     * @param array $context The data payload, in case actions need context.
+     * @return mixed The result of the action (e.g., an array of modifications, or firing a Job).
+     */
+    public function execute(string $alias, array $params, array $context = []): mixed
+    {
+        // TODO: Implement your side-effect logic here.
+        // Example: \Log::info($params['message'] ?? 'Rule triggered!');
+
+        return null;
+    }
+
+    /**
+     * Provide the UI configuration for this component.
+     *
+     * @param  string  $alias  The registered alias for this class
+     * @return array{label: string, description: string, fields: array}
+     */
+    public static function metadata(string $alias): array
+    {
+        return [
+            // The display name in the Admin UI dropdowns
+            'label' => Str::headline(str_replace('.', ' ', $alias)),
+
+            // A helpful description shown below the field in the UI
+            'description' => '',
+
+            // The array of input fields required to configure this action
+            'fields' => [
+                // 'message' => [
+                //     'type' => 'text',
+                //     'label' => 'Some Message',
+                //     'placeholder' => 'Enter some message'
+                // ],
+            ],
+        ];
+    }
+}

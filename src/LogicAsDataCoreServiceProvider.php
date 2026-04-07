@@ -27,6 +27,10 @@ use LaraWave\LogicAsData\Operators\StartsWithOperator;
 use LaraWave\LogicAsData\Operators\BetweenOperator;
 use LaraWave\LogicAsData\Operators\MatchesRegexOperator;
 use LaraWave\LogicAsData\Evaluators\PredicateEvaluator;
+use LaraWave\LogicAsData\Console\Commands\MakeExtractorCommand;
+use LaraWave\LogicAsData\Console\Commands\MakeOperatorCommand;
+use LaraWave\LogicAsData\Console\Commands\MakeResolverCommand;
+use LaraWave\LogicAsData\Console\Commands\MakeActionCommand;
 use LaraWave\LogicAsData\Console\Commands\InstallCommand;
 use LaraWave\LogicAsData\Observers\LogicRuleObserver;
 use LaraWave\LogicAsData\Resolvers\DateTimeResolver;
@@ -248,7 +252,11 @@ class LogicAsDataCoreServiceProvider extends ServiceProvider
     protected function registerCommands(): void
     {
         $this->commands([
-            Console\Commands\InstallCommand::class,
+            InstallCommand::class,
+            MakeExtractorCommand::class,
+            MakeOperatorCommand::class,
+            MakeResolverCommand::class,
+            MakeActionCommand::class,
         ]);
     }
 

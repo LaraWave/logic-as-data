@@ -28,7 +28,7 @@ abstract class TargetResolver
             // description shown below the field in the UI
             'description' => '',
 
-            // The array of input fields required to configure this specific component
+            // The array of input fields required to configure this target resolver
             'fields' => [],
         ];
     }

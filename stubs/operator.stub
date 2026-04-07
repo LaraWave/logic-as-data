@@ -1,0 +1,41 @@
+<?php
+
+namespace {{ namespace }};
+
+use LaraWave\LogicAsData\Operators\Operator;
+use Illuminate\Support\Str;
+
+class {{ class }} extends Operator
+{
+    /**
+     * Check the extracted source value against the target rule value.
+     *
+     * @param mixed $sourceValue The value returned by the Extractor.
+     * @param mixed $targetValue The target value defined in the JSON rule.
+     * @return bool
+     */
+    public function check(mixed $sourceValue, mixed $targetValue = null): bool
+    {
+        // TODO: Implement your comparison logic here.
+        // Example: return $sourceValue === $targetValue;
+
+        return false;
+    }
+
+    /**
+     * Provide the UI configuration for this operator.
+     *
+     * @param  string  $alias  The registered alias for this class
+     * @return array{label: string, description: string}
+     */
+    public static function metadata(string $alias): array
+    {
+        return [
+            // The display name in the Admin UI dropdowns
+            'label' => Str::headline($alias),
+
+            // A helpful description shown below the selector
+            'description' => '',
+        ];
+    }
+}

@@ -8,7 +8,7 @@ namespace LaraWave\LogicAsData\Actions;
 abstract class Action
 {
     /**
-     * Handle the actions defined in a passing rule.
+     * Handle the action defined in the JSON for passing rules.
      *
      * @param string $alias The alias that triggered this action (e.g., 'auth.logout', 'system.log', 'web.redirect' etc)
      * @param array $params The parsed JSON array of action.
