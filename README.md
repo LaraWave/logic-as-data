@@ -10,7 +10,11 @@
 
 In modern applications — especially in **e-commerce marketing and loyalty programs** — business logic changes faster than code can be deployed. Hardcoding conditional logic (like "If user is Gold AND cart > $100") into your controllers creates technical debt and requires a developer for every minor campaign adjustment.
 
-This package flips the script by allowing you to store complex business logic as **structured JSON data** in your database. 
+This package flips the script by allowing you to store complex business logic as **structured JSON data** in your database.
+
+> **⚠️ Beta Version**  
+> **This package is currently in Beta.** Expect frequent updates and potential breaking changes until we reach version 1.0.0. Please report any issues or bugs on the GitHub repository.
+
 
 ### Why Logic-as-Data?
 
@@ -272,6 +276,78 @@ If a Predicate successfully passes, the engine can execute an array of **Actions
     }
 ]
 ```
+
+### 🧩 Extending the Engine
+
+While **Logic-as-Data** ships with few built-in source extractors, operators, target resolvers and actions, every application has unique business logic. You will inevitably need to create custom Extractors/Resolvers (e.g., to get a user's loyalty tier) or custom Actions (e.g., to apply a specific discount code).
+
+To make this seamless, the package includes dedicated Artisan generators that scaffold these classes for you, complete with the required `metadata()` methods for the Admin UI.
+
+#### Artisan Generators
+
+Run any of the following commands in your terminal to generate a new component. By default, these classes are published to your `app/LogicAsData` directory.
+
+```bash
+# 1. Create a Source Extractor (Extracts real-time data from Context)
+php artisan make:logic-extractor UserLoyaltyExtractor
+
+# 2. Create an Operator (Defines a custom comparison rule)
+php artisan make:logic-operator IsPrimeNumberOperator
+
+# 3. Create a Target Resolver (Resolves dynamic targets)
+php artisan make:logic-resolver DatabaseConfigResolver
+
+# 4. Create an Action (Executes a side-effect when a rule passes)
+php artisan make:logic-action ApplyDiscountAction
+```
+
+#### The Custom Component Workflow
+
+Adding a custom component to your logic engine always follows three simple steps:
+
+##### Step 1: Generate & Implement
+Run the Artisan command and open the generated file (e.g., `app/Logic/Extractors/UserLoyaltyExtractor.php`). Implement your PHP logic in the primary method (like `extract()` or `execute()`).
+
+##### Step 2: Configure UI Metadata
+Inside the generated class, you will see a `metadata()` method. Update the `label`, `description`, and `fields` array. This ensures your custom component seamlessly appears in the Vue 3 Admin Dashboard with the correct input fields.
+
+##### Step 3: Register the Component
+For the Logic Engine to recognize your new component, you simply add it to the corresponding array in the **App-level Service Provider**. 
+
+When you ran `php artisan logic-as-data:install`, the package published a dedicated provider to your application at **`app/Providers/LogicAsDataServiceProvider.php`**. 
+
+Open this file and map your new classes to their JSON aliases:
+
+```php
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use App\LogicAsData\Extractors\UserLoyaltyExtractor;
+use App\LogicAsData\Actions\ApplyDiscountAction;
+
+class LogicAsDataServiceProvider extends ServiceProvider
+{
+    /**
+     * Map source aliases to their Source Extractor classes.
+     */
+    private array $extractors = [
+        'user.loyalty_tier' => UserLoyaltyExtractor::class,
+    ];
+
+    /**
+     * Map action aliases to their Action classes.
+     */
+    private array $actions = [
+        'cart.apply_discount' => ApplyDiscountAction::class,
+    ];
+    
+    // ... operators, resolvers, and evaluators arrays
+}
+```
+
+The Service Provider will automatically loop through these arrays during the boot cycle and register them with the underlying `LogicRegistry`. Once registered, your business team can immediately start using `"user.loyalty_tier"` and `"cart.apply_discount"` in their JSON rules via the Admin UI!
+ 
+
 
 ### The Two Execution Methods
 Because of this architecture, the `LogicEngine` provides two distinct ways to interact with your rules:
